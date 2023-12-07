@@ -104,12 +104,12 @@ web_peer_connection::web_peer_connection(peer_connection_args const& pack
 		if (m_path.empty()) m_path += '/';
 		if (m_path[m_path.size() - 1] == '/')
 		{
-			m_path += escape_string(t->torrent_file().name());
+			m_path += escape_string(t->torrent_file().orig_files().name());
 		}
 
 		if (!m_url.empty() && m_url[m_url.size() - 1] == '/')
 		{
-			m_url += escape_file_path(t->torrent_file().files(), file_index_t(0));
+			m_url += escape_file_path(t->torrent_file().orig_files(), file_index_t(0));
 		}
 	}
 
@@ -159,7 +159,7 @@ void web_peer_connection::on_connected()
 		// other way around. Start with assuming we have all files, and clear
 		// pieces overlapping with files we *don't* have.
 		typed_bitfield<piece_index_t> have;
-		file_storage const& fs = t->torrent_file().files();
+		file_storage const& fs = t->torrent_file().orig_files();
 		have.resize(fs.num_pieces(), true);
 		for (auto const i : fs.file_range())
 		{
@@ -574,7 +574,7 @@ bool web_peer_connection::received_invalid_data(piece_index_t const index, bool 
 	// this handles the case where web seeds may have some files updated but not other
 
 	std::shared_ptr<torrent> t = associated_torrent().lock();
-	file_storage const& fs = t->torrent_file().files();
+	file_storage const& fs = t->torrent_file().orig_files();
 
 	// single file torrent
 	if (fs.num_files() == 1) return peer_connection::received_invalid_data(index, single_peer);
@@ -706,7 +706,7 @@ void web_peer_connection::handle_redirect(int const bytes_left)
 				// we just learned that this host has this file, and we're currently
 				// connected to it. Make it advertise that it has this file to the
 				// bittorrent engine
-				file_storage const& fs = t->torrent_file().files();
+				file_storage const& fs = t->torrent_file().orig_files();
 				auto const range = aux::file_piece_range_inclusive(fs, file_index);
 				for (piece_index_t i = std::get<0>(range); i < std::get<1>(range); ++i)
 					pc->incoming_have(i);
